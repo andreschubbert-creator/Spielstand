@@ -207,6 +207,7 @@ summary{cursor:pointer;color:var(--muted);font-size:13px;min-height:36px;display
 .sperr{font-size:12px;color:#fecaca;line-height:1.35}
 
 /* Qwixx: Wertungsblatt und Würfel */
+.qwinput{display:flex;flex-direction:column;gap:8px;margin-top:8px}.qwinrow{display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:8px}.qwin{display:flex;flex-direction:column;gap:3px}.qwin small{font-size:12px;opacity:.8}.qwin select{width:100%;padding:8px;border-radius:8px;font-size:16px}
 .qwcard{padding:12px 10px}.qwhead{display:flex;align-items:center;justify-content:space-between;gap:8px}.qwhead h2{margin-bottom:5px}.qwhead strong{font-size:20px;color:var(--gold);white-space:nowrap;font-variant-numeric:tabular-nums}.qwpen{font-size:12px;color:var(--muted);margin:2px 0 10px}
 .qwrows{display:flex;flex-direction:column;gap:7px}.qwrowwrap{display:flex;align-items:stretch;gap:5px;min-width:0}.qwlbl{width:58px;flex:none;border-radius:8px 0 0 8px;padding:4px 3px;color:var(--bg);background:var(--row);font-size:11px;font-weight:800;display:flex;flex-direction:column;justify-content:center}.qwlbl small{font-size:10px;font-weight:600}.qwline{display:flex;gap:2px;overflow-x:auto;min-width:0;flex:1;padding-bottom:2px}.qwcell{width:29px;height:34px;flex:none;display:flex;align-items:center;justify-content:center;border-radius:6px;background:#17231e;border:1px solid var(--line);font-size:12px}.qwblank{font-size:11px;color:var(--muted)}.qwmark{font-size:15px;font-weight:900;color:var(--accent)}.qwPick{min-height:27px;width:25px;padding:0;border-radius:5px;font-size:10px;font-weight:900}.qwPick.white{color:var(--ink);border-color:#b6c4bd}.qwPick.colored{color:var(--bg);background:var(--row);border-color:transparent}.qwdice{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:8px}.qwdie{border:1px solid var(--row);border-radius:11px;padding:8px 6px;min-width:0;display:flex;flex-direction:column;align-items:center;text-align:center;background:color-mix(in srgb,var(--row) 14%,var(--surf))}.qwdie small{font-size:11px;color:var(--muted)}.qwdie b{font-size:24px;color:var(--row)}.qwdie span{font-size:10px;color:var(--muted);white-space:nowrap}.qwdie.whiteDie{--row:#eef5f1}
 /* Just One: kooperativer Teamzähler */
@@ -1017,11 +1018,25 @@ function qwPlayerScore(p){
   const rowPoints = id => { const n = p.rows[id].length; return n * (n + 1) / 2; };
   return QW_ROWS.reduce((sum, r) => sum + rowPoints(r.id), 0) - (p.penalties || 0) * 5;
 }
+function qwInput(){
+  if (!S.qwIn) S.qwIn = { white: [0, 0], colors: { red: 0, yellow: 0, green: 0, blue: 0 } };
+  return S.qwIn;
+}
+function qwSetDie(key, idx, value){
+  const inp = qwInput(); const v = Number(value);
+  if (key === 'white') inp.white[idx] = v; else inp.colors[key] = v;
+  render();
+}
 function qwRoll(){
   const g = G(); if (!g || g.over || g.roll) return;
+  const inp = qwInput();
+  const ok = v => Number.isInteger(v) && v >= 1 && v <= 6;
+  if (!inp.white.every(ok) || !QW_ROWS.every(r => ok(inp.colors[r.id]))) {
+    setMsg('Bitte alle sechs Würfel eintragen (zwei weiße, vier farbige).', true); render(); return;
+  }
   snap('qwixx');
-  g.roll = { white: [1 + Math.floor(Math.random()*6), 1 + Math.floor(Math.random()*6)],
-    colors: { red: 1 + Math.floor(Math.random()*6), yellow: 1 + Math.floor(Math.random()*6), green: 1 + Math.floor(Math.random()*6), blue: 1 + Math.floor(Math.random()*6) } };
+  g.roll = { white: inp.white.slice(), colors: Object.assign({}, inp.colors) };
+  S.qwIn = null;
   g.turnMarks = { white: g.players.map(() => false), color: false };
   g.viewPlayer = g.cur; S.qwView = g.cur;
   log(`${g.players[g.cur].name} würfelt: weiß ${g.roll.white.join('+')} = ${g.roll.white[0]+g.roll.white[1]}`, 'qwixx');
@@ -1175,7 +1190,7 @@ function renderSetup(id){
   } else if (id === 'kn') {
     rules = `<div class="hint">Jedes Feld nur einmal. Kniffel-Joker-Regel und 35 Punkte Bonus ab 63 Punkten im oberen Teil sind aktiv.</div>`;
   } else if (id === 'qwixx') {
-    rules = `<div class="hint">Für 2–5 Personen. Die App würfelt zwei weiße und vier Farbwürfel. Alle können die weiße Summe ankreuzen; der aktive Spieler kann zusätzlich eine weiße Zahl plus Farbwürfel eintragen. Ohne Eintrag im eigenen Zug gibt es −5 Punkte.</div>`;
+    rules = `<div class="hint">Für 2–5 Personen. Die Würfel werden manuell geworfen und hier eingetragen: zwei weiße und vier Farbwürfel. Alle können die weiße Summe ankreuzen; der aktive Spieler kann zusätzlich eine weiße Zahl plus Farbwürfel eintragen. Ohne Eintrag im eigenen Zug gibt es −5 Punkte.</div>`;
   } else if (id === 'just') {
     rules = `<div class="hint">Kooperativ für 3–7 Personen. Verwendet die Karten aus dem Originalspiel. Der Ratende wechselt pro Karte. Richtig = +1 Punkt, Weiter = eine Karte weg, falsch = zwei Karten weg. Ziel ist eine hohe Team-Punktzahl aus 13 Karten.</div>`;
   } else {
@@ -1408,6 +1423,13 @@ function renderSettings(){
   <main>
     ${msgHtml()}
     <section class="card"><h2>Navigation</h2>${items.slice(0, 2).join('')}</section>
+    <section class="card"><h2>Gemeinsam auf mehreren Geräten</h2>
+      <div class="hint">Alle Geräte mit derselben Datenbank-Adresse und demselben Raumcode sehen dieselben Spiele, Statistiken und dasselbe Protokoll. Die Datenbank ist eine Firebase Realtime Database.</div>
+      <label>Datenbank-Adresse<input id="syncUrl" value="${esc(S.sync.url)}" placeholder="https://dein-projekt.firebaseio.com" onchange="syncFormChange()"></label>
+      <label>Raumcode<input id="syncRoom" value="${esc(S.sync.room)}" placeholder="z. B. familie-spiele" onchange="syncFormChange()"></label>
+      <div class="actions">${S.sync.on ? '<button onclick="syncDisconnect()">Trennen</button>' : '<button class="btn-primary" onclick="syncConnect()">Verbinden</button>'}</div>
+      <div class="hint" id="syncStatus" role="status">${esc(syncStatusText())}</div>
+    </section>
     <section class="card"><h2>Daten</h2>${items.slice(2).join('')}
      </section>
   </main>`;
@@ -1505,6 +1527,7 @@ function renderJournal(){
 /* ---------- Rendern ---------- */
 // render() speichert den Stand (lokal und auf dem Server); render(true) nur anzeigen (nach Abruf vom Server)
 function render(fromRemote){
+  if (!fromRemote) syncLocalChange();
   persist();
   const root = document.getElementById('root');
   const g = G();
@@ -1668,7 +1691,16 @@ function renderQwixx(){
   const dice = roll ? `<div class="qwdice">
       <div class="qwdie whiteDie"><small>Weiß</small><b>${roll.white[0]} + ${roll.white[1]}</b><span>Summe ${whiteSum}</span></div>
       ${QW_ROWS.map(r => `<div class="qwdie" style="--row:${r.color}"><small>${r.name}</small><b>${roll.colors[r.id]}</b><span>${roll.colors[r.id]} + ${roll.white[0]} / ${roll.colors[r.id]} + ${roll.white[1]}</span></div>`).join('')}
-    </div>` : `<div class="sub">Der Spieler am Zug würfelt zwei weiße und vier Farbwürfel.</div>`;
+    </div>` : (() => {
+    const inp = qwInput();
+    const opts = v => [1,2,3,4,5,6].map(n => `<option value="${n}" ${v === n ? 'selected' : ''}>${n}</option>`).join('');
+    const sel = (key, idx, label, v) => `<label class="qwin"><small>${label}</small><select aria-label="${label}" onchange="qwSetDie('${key}', ${idx}, this.value)"><option value="0" ${!v ? 'selected' : ''}>–</option>${opts(v)}</select></label>`;
+    return `<div class="sub">Der Spieler am Zug würfelt die Würfel mit echten Würfeln und trägt die Augenzahlen hier ein.</div>
+      <div class="qwinput">
+        <div class="qwinrow">${sel('white', 0, 'Weiß 1', inp.white[0])}${sel('white', 1, 'Weiß 2', inp.white[1])}</div>
+        <div class="qwinrow">${QW_ROWS.map(r => sel(r.id, 0, r.name, inp.colors[r.id])).join('')}</div>
+      </div>`;
+  })()
   const tabs = g.players.map((p, i) => `<button class="chipbtn" aria-pressed="${S.qwView === i}" onclick="qwSetView(${i})">${esc(p.name)}${i === g.cur ? ' · Zug' : ''}${g.roll && g.turnMarks.white[i] ? ' ✓' : ''}</button>`).join('');
   const marks = roll ? `<div class="hint">Weiße Summe: ${g.turnMarks.white.map((m, i) => `${esc(g.players[i].name)} ${m ? '✓' : 'offen'}`).join(' · ')} · Farbkombination ${g.turnMarks.color ? 'genutzt' : 'für ' + esc(g.players[g.cur].name) + ' verfügbar'}</div>` : '';
   return `${header('Qwixx', `Runde ${g.round} · ${esc(g.players[g.cur].name)} ist dran`)}
@@ -1677,7 +1709,7 @@ function renderQwixx(){
     <section class="side" aria-label="Würfel und Wertungsblatt">
       ${dbWarnHtml()}${msgHtml()}${spotifyNowHtml()}
       <section class="card qwrollcard"><h2>Würfelwurf</h2>${dice}${marks}
-        <button class="btn-primary big" onclick="${roll ? 'qwFinish()' : 'qwRoll()'}">${roll ? 'Runde abschließen' : 'Würfeln'}</button>
+        <button class="btn-primary big" onclick="${roll ? 'qwFinish()' : 'qwRoll()'}">${roll ? 'Runde abschließen' : 'Würfel übernehmen'}</button>
       </section>
       ${roll ? `<section class="card"><h2>Wer kreuzt an?</h2><div class="chips">${tabs}</div></section>` : ''}
       ${renderQwSheet(g, S.qwView || 0)}
@@ -1959,13 +1991,102 @@ function spotifyHomeControls(){
   </section>`;
 }
 
+/* ---------- Gemeinsam: Live-Sync über Firebase Realtime Database (REST + Stream) ---------- */
+const SYNC_KEY = 'wuerfelspiel-sync-v1';
+let syncES = null, syncTimer = null;
+function syncLoadCfg(){
+  S.sync = { url: '', room: '', on: false, state: 'off' };
+  try { const c = JSON.parse(localStorage.getItem(SYNC_KEY) || 'null'); if (c) Object.assign(S.sync, { url: c.url || '', room: c.room || '', on: !!c.on }); } catch (e) {}
+}
+function syncSaveCfg(){
+  try { localStorage.setItem(SYNC_KEY, JSON.stringify({ url: S.sync.url, room: S.sync.room, on: S.sync.on })); } catch (e) {}
+}
+function syncValid(){
+  return /^https:\/\/[a-z0-9-]+\.(firebaseio\.com|firebasedatabase\.app)$/i.test(S.sync.url || '') && /^[a-z0-9-]{4,40}$/i.test(S.sync.room || '');
+}
+function syncBase(){ return S.sync.url + '/rooms/' + S.sync.room; }
+function syncFingerprint(){ const d = snapshot(); delete d.rev; return JSON.stringify(d); }
+function syncStatusText(){
+  return { off: 'Nicht verbunden. Spiele und Statistik bleiben dann nur auf diesem Gerät.',
+    connecting: 'Verbinde …',
+    on: 'Verbunden. Änderungen erscheinen auf allen Geräten mit diesem Raumcode.',
+    error: 'Verbindung gestört. Es wird automatisch neu versucht.' }[S.sync.state] || '';
+}
+function syncUpdateStatus(){ const el = document.getElementById('syncStatus'); if (el) el.textContent = syncStatusText(); }
+function syncFormChange(){
+  const u = document.getElementById('syncUrl'), r = document.getElementById('syncRoom');
+  if (u) S.sync.url = u.value.trim().replace(/\/+$/, '');
+  if (r) S.sync.room = r.value.trim();
+  syncSaveCfg();
+}
+// Lokale Änderung: neue Version nummerieren und mit Verzögerung hochladen
+function syncLocalChange(){
+  const f = syncFingerprint();
+  if (f === S.syncLast) return;
+  S.syncLast = f;
+  S.rev = Date.now();
+  if (S.sync.on) { clearTimeout(syncTimer); syncTimer = setTimeout(syncPushNow, 250); }
+}
+function syncPushNow(){
+  clearTimeout(syncTimer); syncTimer = null;
+  if (!S.sync.on || !syncValid()) return;
+  fetch(syncBase() + '.json', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ rev: S.rev, data: snapshot() }) })
+    .then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); S.sync.state = 'on'; syncUpdateStatus(); })
+    .catch(() => { S.sync.state = 'error'; syncUpdateStatus(); });
+}
+function syncHandleNode(node){
+  if (!S.sync.on) return;
+  S.sync.state = 'on';
+  if (!node || !node.data) { syncPushNow(); return; }
+  const localRev = S.rev || 0, remoteRev = node.rev || 0;
+  if (remoteRev > localRev) {
+    clearTimeout(syncTimer); syncTimer = null;
+    applyData(node.data);
+    S.rev = remoteRev;
+    S.syncLast = syncFingerprint();
+    render(true);
+  } else if (remoteRev < localRev) {
+    syncPushNow();
+  }
+  syncUpdateStatus();
+}
+function syncOnEvent(e){
+  let msg; try { msg = JSON.parse(e.data); } catch (err) { return; }
+  if (!msg) return;
+  if (msg.path === '/' || msg.path === '') { syncHandleNode(msg.data); return; }
+  fetch(syncBase() + '.json').then(r => r.json()).then(syncHandleNode).catch(() => {});
+}
+function syncConnect(){
+  const u = document.getElementById('syncUrl'), r = document.getElementById('syncRoom');
+  if (u) S.sync.url = u.value.trim().replace(/\/+$/, '');
+  if (r) S.sync.room = r.value.trim();
+  if (!syncValid()) { setMsg('Bitte eine Datenbank-Adresse (https://…firebaseio.com) und einen Raumcode (4–40 Zeichen, Buchstaben, Zahlen, Bindestrich) eintragen.', true); render(); return; }
+  syncDisconnect(true);
+  S.sync.on = true; S.sync.state = 'connecting'; syncSaveCfg();
+  syncES = new EventSource(syncBase() + '.json');
+  syncES.addEventListener('open', () => { S.sync.state = 'on'; syncUpdateStatus(); });
+  syncES.addEventListener('put', syncOnEvent);
+  syncES.addEventListener('patch', syncOnEvent);
+  syncES.addEventListener('error', () => { S.sync.state = 'error'; syncUpdateStatus(); });
+  setMsg('Verbindung wird hergestellt.'); render();
+}
+function syncDisconnect(silent){
+  if (syncES) { syncES.close(); syncES = null; }
+  clearTimeout(syncTimer); syncTimer = null;
+  S.sync.on = false; S.sync.state = 'off'; syncSaveCfg();
+  if (!silent) { setMsg('Gemeinsame Verbindung getrennt. Die Daten bleiben auf diesem Gerät.'); render(); }
+}
+
 /* ---------- Start ---------- */
 (function boot(){
   spotifyLoadLocal();
   applyData(loadLocal());
+  syncLoadCfg();
+  S.syncLast = syncFingerprint();
   S.view = 'home';
   S.gid = null;
   render(true);
+  if (S.sync.on) syncConnect();
   spotifyFinishAuth();
   document.addEventListener('visibilitychange', () => { if (!document.hidden && S.music.enabled && S.gid) spotifyPoll(); });
 })();
