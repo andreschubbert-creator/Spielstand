@@ -1552,7 +1552,8 @@ function render(fromRemote){
   const key = S.view + ':' + S.gid;
   const scrollers = () => (typeof root.querySelectorAll === 'function' ? [...root.querySelectorAll('.side, main, .game')] : []);
   const keep = key === S.scrollKey ? scrollers().map(el => el.scrollTop) : null;
-  root.innerHTML = html;
+  // Unverändert: nicht neu aufbauen, sonst gehen Tipps zwischen Berühren und Loslassen verloren
+  if (html !== S.lastHtml || S.lastRoot !== root) { root.innerHTML = html; S.lastHtml = html; S.lastRoot = root; }
   if (keep) scrollers().forEach((el, i) => { if (keep[i] !== undefined) el.scrollTop = keep[i]; });
   S.scrollKey = key;
 }
@@ -2010,7 +2011,7 @@ function syncStatusText(){
   return { off: 'Nicht verbunden. Spiele und Statistik bleiben dann nur auf diesem Gerät.',
     connecting: 'Verbinde …',
     on: 'Verbunden. Änderungen erscheinen auf allen Geräten mit diesem Raumcode.',
-    error: 'Verbindung gestört. Es wird automatisch neu versucht.' }[S.sync.state] || '';
+    error: 'Verbindung gestört. Es wird automatisch neu versucht.' }[S.sync.state] + (S.sync.err ? ' Letzte Meldung: ' + S.sync.err : '');
 }
 function syncUpdateStatus(){ const el = document.getElementById('syncStatus'); if (el) el.textContent = syncStatusText(); }
 function syncFormChange(){
@@ -2031,15 +2032,16 @@ function syncPushNow(){
   clearTimeout(syncTimer); syncTimer = null;
   if (!S.sync.on || !syncValid()) return;
   fetch(syncBase() + '.json', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ rev: S.rev, data: snapshot() }) })
-    .then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); S.sync.state = 'on'; syncUpdateStatus(); })
-    .catch(() => { S.sync.state = 'error'; syncUpdateStatus(); });
+    .then(r => { if (!r.ok) throw new Error('Speichern abgelehnt (HTTP ' + r.status + '). Prüfe die Firebase-Regeln.'); S.sync.state = 'on'; S.sync.err = ''; syncUpdateStatus(); })
+    .catch(e => { S.sync.state = 'error'; S.sync.err = String(e.message || e); syncUpdateStatus(); });
 }
 function syncHandleNode(node){
   if (!S.sync.on) return;
-  S.sync.state = 'on';
+  S.sync.state = 'on'; S.sync.err = '';
   if (!node || !node.data) { syncPushNow(); return; }
   const localRev = S.rev || 0, remoteRev = node.rev || 0;
-  if (remoteRev > localRev) {
+  const localEmpty = !S.wins.length && !S.journal.length && GIDS.every(id => !S.games[id]);
+  if (localEmpty || remoteRev > localRev) {
     clearTimeout(syncTimer); syncTimer = null;
     applyData(node.data);
     S.rev = remoteRev;
@@ -2067,7 +2069,7 @@ function syncConnect(){
   syncES.addEventListener('open', () => { S.sync.state = 'on'; syncUpdateStatus(); });
   syncES.addEventListener('put', syncOnEvent);
   syncES.addEventListener('patch', syncOnEvent);
-  syncES.addEventListener('error', () => { S.sync.state = 'error'; syncUpdateStatus(); });
+  syncES.addEventListener('error', () => { S.sync.state = 'error'; S.sync.err = 'Lesen aus der Datenbank fehlgeschlagen. Adresse und Regeln prüfen.'; syncUpdateStatus(); });
   setMsg('Verbindung wird hergestellt.'); render();
 }
 function syncDisconnect(silent){
