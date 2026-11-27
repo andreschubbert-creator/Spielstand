@@ -206,6 +206,19 @@ summary{cursor:pointer;color:var(--muted);font-size:13px;min-height:36px;display
 .spactions{display:flex;gap:6px}.spactions button{flex:1}
 .sperr{font-size:12px;color:#fecaca;line-height:1.35}
 
+/* Fehlwurf-Button unter den Spielern, Punkte-Pop */
+.bustbtn{width:100%;min-height:46px;font-weight:700}
+.pcard{position:relative}
+.popv{position:absolute;right:14px;top:14px;font-weight:800;font-size:20px;color:var(--accent);pointer-events:none;font-variant-numeric:tabular-nums;animation:popv 1.2s ease-out forwards}
+@keyframes popv{0%{opacity:0;transform:translateY(10px) scale(.8)}20%{opacity:1;transform:translateY(0) scale(1.1)}70%{opacity:1}100%{opacity:0;transform:translateY(-16px)}}
+@media (prefers-reduced-motion: reduce){.popv{animation:none;opacity:1}}
+/* Zugprotokoll pro Spieler */
+.plog-back{position:fixed;inset:0;background:rgba(0,0,0,.6);display:flex;align-items:center;justify-content:center;padding:16px;z-index:50}
+.plog{background:var(--surf);border:1px solid var(--line);border-radius:14px;padding:16px;width:100%;max-width:420px;max-height:80vh;overflow:auto}
+.plog-top{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.plog-list{margin:10px 0 0;padding-left:28px;display:flex;flex-direction:column;gap:6px;font-variant-numeric:tabular-nums}
+.plog-list li{font-size:15px;padding-left:4px}
+.plr{font-size:12px;color:var(--muted);margin-right:4px}
 /* Qwixx: Wertungsblatt und Würfel */
 .qwinput{display:flex;flex-direction:column;gap:8px;margin-top:8px}.qwinrow{display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:8px}.qwin{display:flex;flex-direction:column;gap:3px}.qwin small{font-size:12px;opacity:.8}.qwin select{width:100%;padding:8px;border-radius:8px;font-size:16px}
 .qwcard{padding:12px 10px}.qwhead{display:flex;align-items:center;justify-content:space-between;gap:8px}.qwhead h2{margin-bottom:5px}.qwhead strong{font-size:20px;color:var(--gold);white-space:nowrap;font-variant-numeric:tabular-nums}.qwpen{font-size:12px;color:var(--muted);margin:2px 0 10px}
@@ -360,10 +373,12 @@ function syncNames(id){
 
 /* ---------- Navigation ---------- */
 function goHome(){
+  S.plog = null;
   S.view = 'home'; S.gid = null; S.askNew = false; S.msg = '';
   render();
 }
 function openGame(id){
+  S.plog = null;
   if (S.music && S.music.enabled && S.games[id]) spotifyStartForGame();
   S.gid = id; S.askNew = false; S.msg = '';
   S.view = S.games[id] ? 'game' : 'setup';
@@ -543,7 +558,7 @@ function startGame(id){
   if (S.music && S.music.enabled) spotifyStartForGame();
   syncNames(id);
   const c = S.cfg[id];
-  const players = c.names.map((n, i) => ({ name: (n || '').trim() || defaultName(i), score: 0, entered: false, last: null }));
+  const players = c.names.map((n, i) => ({ name: (n || '').trim() || defaultName(i), score: 0, entered: false, last: null, hist: [] }));
   const base = { id: Date.now(), gid: id, players, cur: 0, round: 1, over: false };
   let g;
   if (id === 'w10') {
@@ -649,10 +664,10 @@ function addPts(p, label){
   const name = g.players[g.cur].name;
   g.turn += p;
   g.entries.push({ label, p });
-  log(`${name}: +${fmt(p)} (${label}), Zug jetzt ${fmt(g.turn)}`, 'w10');
+  log(`${name}: +${fmt(p)} (${label})`, 'w10');
   S.manual = '';
-  setMsg('');
-  render();
+  S.pop = { i: g.cur, v: p };
+  endTurn(false);
 }
 
 // Schnellbuttons: schreiben den Wert in den Zug und beenden ihn direkt
@@ -662,7 +677,8 @@ function quickTap(v){
   snap();
   g.turn += v;
   g.entries.push({ label: String(v), p: v });
-  log(`${g.players[g.cur].name}: +${fmt(v)} (${v}), Zug jetzt ${fmt(g.turn)}`, 'w10');
+  log(`${g.players[g.cur].name}: +${fmt(v)} (${v})`, 'w10');
+  S.pop = { i: g.cur, v };
   endTurn(false);
 }
 
@@ -690,6 +706,29 @@ function bust(){
   g.entries.push({ label: 'Fehlwurf', p: 0 });
   endTurn(true);
 }
+function playerLog(i){ S.plog = i; render(); }
+function closePlayerLog(){ S.plog = null; render(); }
+function playerLogHtml(){
+  const g = G(); if (!g || S.plog == null || !g.players[S.plog]) return '';
+  const p = g.players[S.plog];
+  let tot = 0;
+  const rows = (p.hist || []).map((h, i) => {
+    const scored = String(h.res).startsWith('+');
+    const gain = scored ? Number(String(h.res).replace(/[^0-9]/g, '')) : 0;
+    tot += gain;
+    const multi = h.parts.length > 1 ? ` <span class="plr">(${h.parts.map(esc).join(' + ')})</span>` : '';
+    const text = i === 0
+      ? (scored ? fmt(gain) : esc(h.res))
+      : (scored ? `+${fmt(gain)} = ${fmt(tot)}` : `${esc(h.res)} = ${fmt(tot)}`);
+    return `<li>${text}${multi}</li>`;
+  }).join('');
+  return `<div class="plog-back" onclick="if(event.target===this)closePlayerLog()">
+    <section class="plog" role="dialog" aria-modal="true" aria-labelledby="plogTitle">
+      <div class="plog-top"><h2 id="plogTitle">${esc(p.name)}</h2><button class="btn-small" onclick="closePlayerLog()">Schließen</button></div>
+      <div class="sub">Stand ${fmt(p.score)}</div>
+      ${rows ? `<ol class="plog-list">${rows}</ol>` : `<div class="sub">Noch keine Züge.</div>`}
+    </section></div>`;
+}
 function endBtn(){
   const g = G();
   if (!g || g.over) return;
@@ -716,6 +755,8 @@ function endTurn(bustTurn){
     p.last = '+' + fmt(g.turn);
     note = `${p.name} schreibt ${fmt(g.turn)} Punkte gut (Stand ${fmt(p.score)}).`;
   }
+  if (!p.hist) p.hist = [];
+  p.hist.push({ r: g.round, parts: bustTurn ? ['Fehlwurf'] : g.entries.map(e => e.p ? fmt(e.p) : e.label), res: p.last });
   g.lastCommit = { name: p.name, text: p.last };
 
   // Sofortiger Sieg: wer das Ziel zuerst erreicht, gewinnt
@@ -1123,7 +1164,7 @@ function justOutcome(outcome){
 }
 
 /* ---------- Spielerkarten (oben, im Raster) ---------- */
-function renderCards(g, meta, rankAsc){
+function renderCards(g, meta, rankAsc, onPick){
   const n = g.players.length;
   const phoneCols = { 2: 2, 3: 3, 4: 2, 5: 3, 6: 3, 7: 3, 8: 3 }[n] || 3;
   const wideCols = { 2: 2, 3: 3, 4: 4, 5: 3, 6: 3, 7: 4, 8: 4 }[n] || 4;
@@ -1132,7 +1173,7 @@ function renderCards(g, meta, rankAsc){
   const cards = g.players.map((p, i) => {
     const active = i === g.cur && !g.over;
     const rank = order.indexOf(i) + 1;
-    return `<div class="pcard ${active ? 'active' : ''}" aria-current="${active ? 'true' : 'false'}">
+    return `<div class="pcard ${active ? 'active' : ''}" aria-current="${active ? 'true' : 'false'}" ${onPick ? `role="button" tabindex="0" aria-label="Spielzüge von ${esc(p.name)} anzeigen" onclick="${onPick}(${i})" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();${onPick}(${i})}" style="cursor:pointer"` : ''}>
       <div class="ptop"><span class="pname">${esc(p.name)}</span><span class="prank">#${rank}</span></div>
       <div class="pscore">${fmt(p.score)}</div>
       <div class="pmeta">${meta(p, i, active)}</div>
@@ -1226,7 +1267,7 @@ function renderW10(){
   const entries = g.entries.length
     ? g.entries.map(e => `<span class="chip">${esc(e.label)}${e.p ? ' +' + fmt(e.p) : ''}</span>`).join('')
     : `<span class="sub">Noch keine Punkte im Zug</span>`;
-  const vals = [300,350,400,450,500,600,700,800,900,1000,1500,2000];
+  const vals = [300,350,400,450,500,600,650,700,1000,1050,1500,2000];
   const hot = [300,350,400,500,1000];
   const quick = vals.map(v =>
     `<button class="${hot.includes(v) ? 'hot' : ''}" onclick="quickTap(${v})">${fmt(v)}</button>`).join('');
@@ -1236,16 +1277,11 @@ function renderW10(){
     `<button aria-pressed="${c === S.cnt}" onclick="setCnt(${c})">${c}×</button>`).join('');
   return `${header('Würfelspiel 10.000', `Ziel ${fmt(g.target)}${g.minOpen > 0 ? ' · Einstieg ' + fmt(g.minOpen) : ''}`)}
   <div class="game">
-    ${renderCards(g, meta)}
+    ${renderCards(g, meta, null, 'playerLog')}
+    <button class="btn-bad bustbtn" onclick="bust()">Fehlwurf</button>
     <section class="side" aria-label="Eingabe">
       ${dbWarnHtml()}${msgHtml()}
       ${spotifyNowHtml()}
-      <div class="turn">
-        <div class="tl"><span class="tname">${esc(g.players[g.cur].name)} ist dran</span><span>Runde ${g.round}</span></div>
-        <div class="tval" aria-label="Punkte im aktuellen Zug">${fmt(g.turn)}</div>
-        <div class="tlast">${lastText}</div>
-        <div class="entries">${entries}</div>
-      </div>
       <div class="quick">${quick}</div>
       <div class="manual">
         <input type="number" inputmode="numeric" min="0" step="5" placeholder="Eigene Punkte, z. B. 353"
@@ -1255,8 +1291,6 @@ function renderW10(){
       </div>
       <div class="actions">
         <button onclick="undo()" ${S.hist.w10.length ? '' : 'disabled'}>↶ Rückgängig</button>
-        <button class="btn-bad" onclick="bust()">Fehlwurf</button>
-        <button class="btn-primary wide" onclick="endBtn()">Zug beenden</button>
       </div>
       <details>
         <summary>Pasch berechnen</summary>
@@ -1548,6 +1582,7 @@ function render(fromRemote){
     else html = renderRom();
   }
   else html = renderHome();
+  if (S.view === 'game' && S.plog != null && S.gid === 'w10') html += playerLogHtml();
   // Scroll-Position beibehalten, solange dieselbe Ansicht offen bleibt
   const key = S.view + ':' + S.gid;
   const scrollers = () => (typeof root.querySelectorAll === 'function' ? [...root.querySelectorAll('.side, main, .game')] : []);
@@ -1556,6 +1591,11 @@ function render(fromRemote){
   if (html !== S.lastHtml || S.lastRoot !== root) { root.innerHTML = html; S.lastHtml = html; S.lastRoot = root; }
   if (keep) scrollers().forEach((el, i) => { if (keep[i] !== undefined) el.scrollTop = keep[i]; });
   S.scrollKey = key;
+  if (S.pop) {
+    const card = root.querySelectorAll('.pcard')[S.pop.i];
+    if (card) card.insertAdjacentHTML('beforeend', `<span class=\"popv\" aria-hidden=\"true\">+${fmt(S.pop.v)}</span>`);
+    S.pop = null;
+  }
 }
 
 
