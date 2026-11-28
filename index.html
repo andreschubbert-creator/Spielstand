@@ -1500,6 +1500,7 @@ function renderSettings(){
   items.push(`<button class="rowbtn ${S.askReset ? 'danger' : ''}" onclick="resetStats()">${S.askReset ? 'Wirklich alle Siege löschen?' : 'Statistik zurücksetzen'}</button>`);
   items.push(`<button class="rowbtn" onclick="exportData()">Daten exportieren (JSON)</button>`);
   items.push(`<button class="rowbtn" onclick="clearCacheReload()">App neu laden (Cache leeren)</button>`);
+  items.push(`<div class="hint" aria-label="Versionsstand">Version: ${esc(APP_VERSION)}</div>`);
     return `${header('Einstellungen', `${S.wins.length} Siege gespeichert`, `<button class="btn-small" onclick="goBack()">← Zurück</button>`)}
   <main>
     ${msgHtml()}
@@ -2080,6 +2081,8 @@ function spotifyHomeControls(){
 }
 
 /* ---------- Gemeinsam: Live-Sync über Firebase Realtime Database (REST + Stream) ---------- */
+// Versionsstand: bei jedem neuen Build aktualisiert, damit man die geladene Fassung erkennt
+const APP_VERSION = 'Build 28.11.2026 10:24';
 const SYNC_KEY = 'wuerfelspiel-sync-v1';
 const SYNC_DEFAULT_URL = 'https://spielesammlung-2c47e-default-rtdb.firebaseio.com';
 const SYNC_DEFAULT_ROOM = 'TogetherGames';
