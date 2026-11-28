@@ -397,6 +397,23 @@ function go(v){
   render();
 }
 function openSettings(){ go('settings'); }
+// Leert den zwischengespeicherten Stand dieser Seite und lädt sie neu.
+// Spielstände (localStorage) und Einstellungen bleiben erhalten.
+async function clearCacheReload(){
+  setMsg('Cache wird geleert …'); render();
+  try {
+    if (window.caches && caches.keys) {
+      const keys = await caches.keys();
+      await Promise.all(keys.map(k => caches.delete(k)));
+    }
+    if (navigator.serviceWorker && navigator.serviceWorker.getRegistrations) {
+      const regs = await navigator.serviceWorker.getRegistrations();
+      await Promise.all(regs.map(r => r.unregister()));
+    }
+  } catch (e) { /* ohne Erfolg trotzdem neu laden */ }
+  const base = location.origin + location.pathname;
+  location.replace(base + '?neu=' + Date.now());
+}
 function goBack(){
   let v = S.prev || 'home';
   if (v === 'settings') v = 'home';
@@ -1482,6 +1499,7 @@ function renderSettings(){
   if (id) items.push(`<button class="rowbtn ${S.askNew ? 'danger' : ''}" onclick="newGameTap()">${S.askNew ? 'Wirklich neues Spiel starten? (' + esc(GAMES[id].title) + ')' : 'Neues Spiel: ' + esc(GAMES[id].title)}</button>`);
   items.push(`<button class="rowbtn ${S.askReset ? 'danger' : ''}" onclick="resetStats()">${S.askReset ? 'Wirklich alle Siege löschen?' : 'Statistik zurücksetzen'}</button>`);
   items.push(`<button class="rowbtn" onclick="exportData()">Daten exportieren (JSON)</button>`);
+  items.push(`<button class="rowbtn" onclick="clearCacheReload()">App neu laden (Cache leeren)</button>`);
     return `${header('Einstellungen', `${S.wins.length} Siege gespeichert`, `<button class="btn-small" onclick="goBack()">← Zurück</button>`)}
   <main>
     ${msgHtml()}
