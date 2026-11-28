@@ -224,6 +224,7 @@ summary{cursor:pointer;color:var(--muted);font-size:13px;min-height:36px;display
 .pst{background:var(--surf2);border-radius:10px;padding:8px;text-align:center}
 .pst b{display:block;font-size:20px;font-variant-numeric:tabular-nums}
 .pst span{font-size:12px;color:var(--muted)}
+.build-info{font-size:12px;color:var(--muted);text-align:center;padding:14px 0 6px;font-variant-numeric:tabular-nums}
 .pst-h{font-size:14px;margin:14px 0 0;color:var(--muted)}
 /* Qwixx: Wertungsblatt und Würfel */
 .qwinput{display:flex;flex-direction:column;gap:8px;margin-top:8px}.qwinrow{display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:8px}.qwin{display:flex;flex-direction:column;gap:3px}.qwin small{font-size:12px;opacity:.8}.qwin select{width:100%;padding:8px;border-radius:8px;font-size:16px}
@@ -1500,7 +1501,6 @@ function renderSettings(){
   items.push(`<button class="rowbtn ${S.askReset ? 'danger' : ''}" onclick="resetStats()">${S.askReset ? 'Wirklich alle Siege löschen?' : 'Statistik zurücksetzen'}</button>`);
   items.push(`<button class="rowbtn" onclick="exportData()">Daten exportieren (JSON)</button>`);
   items.push(`<button class="rowbtn" onclick="clearCacheReload()">App neu laden (Cache leeren)</button>`);
-  items.push(`<div class="hint" aria-label="Versionsstand">Version: ${esc(APP_VERSION)}</div>`);
     return `${header('Einstellungen', `${S.wins.length} Siege gespeichert`, `<button class="btn-small" onclick="goBack()">← Zurück</button>`)}
   <main>
     ${msgHtml()}
@@ -1514,6 +1514,7 @@ function renderSettings(){
     </section>
     <section class="card"><h2>Daten</h2>${items.slice(2).join('')}
      </section>
+    <footer class="build-info" aria-label="Versionsstand">Version: ${esc(APP_VERSION)}</footer>
   </main>`;
 }
 
@@ -2082,7 +2083,7 @@ function spotifyHomeControls(){
 
 /* ---------- Gemeinsam: Live-Sync über Firebase Realtime Database (REST + Stream) ---------- */
 // Versionsstand: bei jedem neuen Build aktualisiert, damit man die geladene Fassung erkennt
-const APP_VERSION = 'Build 28.11.2026 10:24';
+const APP_VERSION = 'Build 28.11.2026 11:29';
 const SYNC_KEY = 'wuerfelspiel-sync-v1';
 const SYNC_DEFAULT_URL = 'https://spielesammlung-2c47e-default-rtdb.firebaseio.com';
 const SYNC_DEFAULT_ROOM = 'TogetherGames';
