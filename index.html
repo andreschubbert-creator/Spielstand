@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Spielesammlung</title>
 <style>
-:root{--bg:#0c1411;--surf:#152019;--surf2:#1d2b25;--line:#2a3d35;--ink:#eef5f1;--muted:#8ea498;--accent:#34d399;--accent-ink:#06261b;--gold:#f5c451;--bad:#f87171;--bad-bg:#3a1f22;--r:16px}
+:root{--bg:#0c1411;--surf:#152019;--surf2:#1d2b25;--line:#2a3d35;--ink:#eef5f1;--muted:#8ea498;--accent:#34d399;--accent-ink:#06261b;--gold:#f5c451;--bad:#f87171;--bad-bg:#3a1f22;--r:16px;--hover:#243832;--accent-hover:#5ee6ae;--bad-line:#5a2c30;--msg-bg:#11362a;--msg-ink:#a7f3d0;--warn-ink:#fecaca;--line-hover:#355247;--active-bg:#14302a;--hot-line:#2f6b55;--sp-bg:#10291e;--sp-line:#28553f}
 *{box-sizing:border-box}
 html,body{margin:0;height:100%}
 body{font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;background:var(--bg);color:var(--ink);-webkit-tap-highlight-color:transparent}
@@ -20,13 +20,13 @@ h2{font-size:12px;margin:0 0 10px;color:var(--muted);font-weight:700;text-transf
 main{flex:1;overflow-y:auto;padding:6px 14px 16px;max-width:560px;width:100%;margin:0 auto;-webkit-overflow-scrolling:touch}
 main.home{max-width:960px}
 button{font:inherit;cursor:pointer;min-height:44px;padding:0 14px;border-radius:12px;background:var(--surf2);color:var(--ink);border:1px solid var(--line);transition:transform .08s,background .15s,border-color .15s}
-button:hover{background:#243832}
+button:hover{background:var(--hover)}
 button:active{transform:scale(.96)}
 button:disabled{opacity:.35;cursor:default}
 button:focus-visible,input:focus-visible,summary:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
 .btn-primary{background:var(--accent);color:var(--accent-ink);border-color:transparent;font-weight:700}
-.btn-primary:hover{background:#5ee6ae}
-.btn-bad{background:var(--bad-bg);color:var(--bad);border-color:#5a2c30;font-weight:600}
+.btn-primary:hover{background:var(--accent-hover)}
+.btn-bad{background:var(--bad-bg);color:var(--bad);border-color:var(--bad-line);font-weight:600}
 .btn-small{min-height:36px;font-size:13.5px;padding:0 12px}
 .icon-btn{flex:none;min-width:44px;width:44px;padding:0;font-size:18px;border-radius:14px}
 .big{width:100%;min-height:52px;font-size:16px;margin-top:6px}
@@ -41,14 +41,14 @@ button:focus-visible,input:focus-visible,summary:focus-visible{outline:2px solid
 .seg button[aria-pressed=true],.chipbtn[aria-pressed=true]{background:var(--accent);color:var(--accent-ink);border-color:transparent;font-weight:700}
 .chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
 .chipbtn{min-height:38px;padding:0 14px;font-size:14px;border-radius:999px}
-.msg{font-size:13.5px;background:#11362a;color:#a7f3d0;border-radius:12px;padding:9px 12px;margin-bottom:10px}
-.msg.warn{background:var(--bad-bg);color:#fecaca}
+.msg{font-size:13.5px;background:var(--msg-bg);color:var(--msg-ink);border-radius:12px;padding:9px 12px;margin-bottom:10px}
+.msg.warn{background:var(--bad-bg);color:var(--warn-ink)}
 .hint{font-size:12px;color:var(--muted);margin:8px 2px 0;line-height:1.4}
 
 /* Startseite */
 .glist{display:grid;gap:12px;grid-template-columns:1fr}
 .gcard{display:flex;align-items:center;gap:14px;width:100%;min-height:96px;text-align:left;padding:16px;border-radius:18px;background:var(--surf);border:1px solid var(--line)}
-.gcard:hover{border-color:#355247}
+.gcard:hover{border-color:var(--line-hover)}
 .gicon{font-size:34px;flex:none}
 .gtext{display:flex;flex-direction:column;gap:4px;min-width:0;flex:1}
 .gtext b{font-size:17px}
@@ -94,14 +94,14 @@ button:focus-visible,input:focus-visible,summary:focus-visible{outline:2px solid
 .pcard{min-width:0;container-type:inline-size;display:flex;flex-direction:column;gap:2px;padding:14px 16px;background:var(--surf);border:1px solid var(--line);border-radius:14px;overflow:hidden;transition:border-color .2s,background .2s}
 .players.sz-m .pcard{padding:11px 12px}
 .players.sz-l .pcard{padding:8px 10px}
-.pcard.active{border-color:var(--accent);background:#14302a;box-shadow:inset 0 3px 0 var(--accent)}
+.pcard.active{border-color:var(--accent);background:var(--active-bg);box-shadow:inset 0 3px 0 var(--accent)}
 .ptop{display:flex;align-items:center;justify-content:space-between;gap:6px;min-width:0}
 .pname{font-weight:700;font-size:var(--fn);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
 .prank{flex:none;font-size:11px;font-weight:700;color:var(--muted);background:var(--surf2);border-radius:999px;padding:1px 7px;font-variant-numeric:tabular-nums}
 .pscore{font-size:min(var(--fs),25cqw);font-weight:800;line-height:1.15;font-variant-numeric:tabular-nums;white-space:nowrap}
 .pcard.active .pscore{color:var(--accent)}
 .pmeta{font-size:var(--fm);color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
-.pcard.active .pmeta{color:#a7f3d0}
+.pcard.active .pmeta{color:var(--msg-ink)}
 .side{flex:1 1 auto;min-height:0;display:flex;flex-direction:column;gap:8px;overflow-y:auto}
 .side .msg{margin:0;font-size:13px;padding:8px 10px}
 .turn{background:var(--surf);border:1px solid var(--line);border-radius:var(--r);padding:12px 14px}
@@ -113,7 +113,7 @@ button:focus-visible,input:focus-visible,summary:focus-visible{outline:2px solid
 .chip{font-size:12px;padding:3px 9px;border-radius:999px;background:var(--surf2);border:1px solid var(--line);white-space:nowrap}
 .quick{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
 .quick button{min-height:42px;padding:0;font-weight:600;font-size:15px;font-variant-numeric:tabular-nums}
-.quick button.hot{border-color:#2f6b55;color:#a7f3d0}
+.quick button.hot{border-color:var(--hot-line);color:var(--msg-ink)}
 .manual{display:flex;gap:6px}
 .manual input{flex:1;min-width:0;font:inherit;font-size:17px;font-weight:600;min-height:44px;padding:0 12px;border-radius:12px;border:1px solid var(--line);background:var(--bg);color:var(--ink)}
 .manual button{flex:none}
@@ -123,7 +123,7 @@ button:focus-visible,input:focus-visible,summary:focus-visible{outline:2px solid
 .dice{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
 .die{min-height:76px;flex-direction:column;justify-content:center;gap:2px;padding:6px;font-weight:700;font-size:15px}
 .dface{font-size:34px;line-height:1}
-.die.bad{color:var(--bad);border-color:#5a2c30}
+.die.bad{color:var(--bad);border-color:var(--bad-line)}
 .vrow{display:grid;grid-template-columns:minmax(0,1fr) 96px auto;gap:8px;align-items:center;margin-bottom:8px}
 .vname{font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .vrow input,.cgrid input{font:inherit;font-size:16px;min-height:42px;padding:0 10px;border-radius:12px;border:1px solid var(--line);background:var(--bg);color:var(--ink);width:100%}
@@ -160,12 +160,12 @@ summary{cursor:pointer;color:var(--muted);font-size:13px;min-height:36px;display
 .ktbl thead .kc{z-index:2}
 .ktbl small{color:var(--muted);font-weight:400}
 .ktbl td.kopen{color:var(--muted)}
-.ktbl .kcur{background:#14302a}
+.ktbl .kcur{background:var(--active-bg)}
 .ktbl thead .kcur{color:var(--accent)}
-.ktbl .ksum th,.ktbl .ksum td{font-weight:700;border-top:1px solid #355247}
+.ktbl .ksum th,.ktbl .ksum td{font-weight:700;border-top:1px solid var(--line-hover)}
 .ktbl .ktot td,.ktbl .ktot th{font-size:16px;color:var(--gold);font-weight:800}
 .trow{display:grid;grid-template-columns:minmax(0,auto) auto;align-items:start;gap:4px 10px;padding:9px 6px;border-bottom:1px solid var(--line);font-size:14px;border-radius:10px}
-.trow.tcur{background:#14302a}
+.trow.tcur{background:var(--active-bg)}
 .trow b{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .tcount{font-size:12px;color:var(--muted);justify-self:end;white-space:nowrap}
 .tchips{grid-column:1 / -1;display:flex;flex-wrap:wrap;gap:5px}
@@ -197,14 +197,14 @@ summary{cursor:pointer;color:var(--muted);font-size:13px;min-height:36px;display
 .spconfig summary{cursor:pointer;color:var(--muted);font-size:13px;min-height:32px;display:flex;align-items:center}
 .spsecure{display:block;color:var(--ink);font-weight:700;overflow-wrap:anywhere;margin-top:5px}.spconfig code{display:block;overflow-wrap:anywhere;color:var(--ink);font-size:11px;margin:6px 0}
 .spconfigrow{display:flex;align-items:center;justify-content:space-between;gap:8px}
-.spbar{background:#10291e;border:1px solid #28553f;border-radius:14px;padding:10px;display:flex;flex-direction:column;gap:8px}
+.spbar{background:var(--sp-bg);border:1px solid var(--sp-line);border-radius:14px;padding:10px;display:flex;flex-direction:column;gap:8px}
 .sptrack{display:flex;align-items:center;gap:10px;min-width:0}
 .spcover{width:48px;height:48px;object-fit:cover;border-radius:6px;flex:none}
 .spmeta{min-width:0;display:flex;flex-direction:column;gap:2px}
 .spmeta b,.spmeta span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .spmeta b{font-size:14px}.spmeta span,.spmeta small{font-size:12px;color:var(--muted)}
 .spactions{display:flex;gap:6px}.spactions button{flex:1}
-.sperr{font-size:12px;color:#fecaca;line-height:1.35}
+.sperr{font-size:12px;color:var(--warn-ink);line-height:1.35}
 
 /* Fehlwurf-Button unter den Spielern, Punkte-Pop */
 .bustbtn{width:100%;min-height:46px;font-weight:700}
@@ -224,6 +224,11 @@ summary{cursor:pointer;color:var(--muted);font-size:13px;min-height:36px;display
 .pst{background:var(--surf2);border-radius:10px;padding:8px;text-align:center}
 .pst b{display:block;font-size:20px;font-variant-numeric:tabular-nums}
 .pst span{font-size:12px;color:var(--muted)}
+.themes{display:grid;grid-template-columns:repeat(auto-fill,minmax(118px,1fr));gap:8px;margin-top:8px}
+.theme-b{display:flex;flex-direction:column;align-items:flex-start;gap:6px;padding:8px;font-size:13px;text-align:left}
+.theme-b[aria-pressed=true]{border-color:var(--accent);box-shadow:inset 0 0 0 1px var(--accent)}
+.sw{display:flex;width:100%;height:26px;border-radius:8px;overflow:hidden;border:1px solid var(--line)}
+.sw i{flex:1;display:block}
 .build-info{font-size:12px;color:var(--muted);text-align:center;padding:14px 0 6px;font-variant-numeric:tabular-nums}
 .pst-h{font-size:14px;margin:14px 0 0;color:var(--muted)}
 /* Qwixx: Wertungsblatt und Würfel */
@@ -1505,6 +1510,7 @@ function renderSettings(){
   <main>
     ${msgHtml()}
     <section class="card"><h2>Navigation</h2>${items.slice(0, 2).join('')}</section>
+    ${themeHtml()}
     <section class="card"><h2>Gemeinsam auf mehreren Geräten</h2>
       <div class="hint">Alle Geräte mit derselben Datenbank-Adresse und demselben Raumcode sehen dieselben Spiele, Statistiken und dasselbe Protokoll. Die Datenbank ist eine Firebase Realtime Database.</div>
       <label>Datenbank-Adresse<input id="syncUrl" value="${esc(S.sync.url)}" placeholder="https://dein-projekt.firebaseio.com" onchange="syncFormChange()"></label>
@@ -2176,8 +2182,64 @@ function syncDisconnect(silent){
   if (!silent) { setMsg('Gemeinsame Verbindung getrennt. Die Daten bleiben auf diesem Gerät.'); render(); }
 }
 
+/* ---------- Farbschema (pro Gerät) ---------- */
+// [Name, Hintergrund, Schrift, Akzent, Gold (optional), Warnfarbe (optional)]
+const THEMES = [
+  ['Dunkel', '#0c1411', '#eef5f1', '#34d399', '#f5c451', '#f87171'],
+  ['Weiß', '#fbfcfb', '#14201b', '#0f9f6e', '#b7791f', '#dc2626'],
+  ['Regenbogen', '#14102a', '#fdf6ff', '#ff5fa2', '#ffd23f', '#ff6b6b'],
+  ['Modern', '#0f1020', '#f2f0ff', '#7c83ff', '#ff8a65', '#ff6f91']
+];
+const THEME_KEY = 'wuerfelspiel-theme-v1';
+const THEME_VARS = ['bg','surf','surf2','line','ink','muted','accent','accent-ink','gold','bad','bad-bg','hover','accent-hover','bad-line','msg-bg','msg-ink','warn-ink','line-hover','active-bg','hot-line','hot-ink','sp-bg','sp-line'];
+function hexRgb(h){ h = h.replace('#', ''); return [0, 2, 4].map(i => parseInt(h.substr(i, 2), 16)); }
+function rgbHex(c){ return '#' + c.map(v => Math.round(Math.max(0, Math.min(255, v))).toString(16).padStart(2, '0')).join(''); }
+function mixHex(a, b, t){ const A = hexRgb(a), B = hexRgb(b); return rgbHex(A.map((v, i) => v + (B[i] - v) * t)); }
+function lumHex(h){ const c = hexRgb(h).map(v => { v /= 255; return v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4); }); return 0.2126 * c[0] + 0.7152 * c[1] + 0.0722 * c[2]; }
+// Leitet alle Farben eines Schemas ab
+function themeVars(t){
+  const [, bg, ink, acc, gold, bad] = t;
+  const light = lumHex(bg) >= 0.2;
+  const badV = bad || (light ? '#dc2626' : '#f87171');
+  // Schriftfarbe auf dem Akzent: hell oder dunkel, je nachdem welche den höheren Kontrast gibt
+  const La = lumHex(acc), dk = '#0b1a13';
+  const accInk = (1.05 / (La + 0.05)) > ((La + 0.05) / (lumHex(dk) + 0.05)) ? '#ffffff' : dk;
+  const line = mixHex(bg, ink, 0.2);
+  const surf2 = mixHex(bg, ink, 0.10);
+  const msgInk = mixHex(acc, ink, 0.45);
+  return {
+    'bg': bg, 'surf': mixHex(bg, ink, 0.05), 'surf2': surf2, 'line': line, 'ink': ink,
+    'muted': mixHex(ink, bg, 0.4), 'accent': acc, 'accent-ink': accInk, 'gold': gold || '#f5c451',
+    'bad': badV, 'bad-bg': mixHex(bg, badV, 0.18), 'hover': mixHex(surf2, ink, 0.06),
+    'accent-hover': mixHex(acc, ink, 0.12), 'bad-line': mixHex(badV, bg, 0.5),
+    'msg-bg': mixHex(mixHex(bg, ink, 0.05), acc, 0.18), 'msg-ink': msgInk,
+    'warn-ink': mixHex(badV, ink, 0.5), 'line-hover': mixHex(line, acc, 0.45),
+    'active-bg': mixHex(mixHex(bg, ink, 0.05), acc, 0.10), 'hot-line': mixHex(line, acc, 0.5),
+    'hot-ink': msgInk, 'sp-bg': mixHex(bg, acc, 0.07), 'sp-line': mixHex(bg, acc, 0.28)
+  };
+}
+function applyTheme(i){
+  const root = document.documentElement.style;
+  S.themeIdx = (i >= 0 && i < THEMES.length) ? i : 0;
+  if (S.themeIdx === 0) { THEME_VARS.forEach(k => root.removeProperty('--' + k)); }
+  else { const v = themeVars(THEMES[S.themeIdx]); Object.keys(v).forEach(k => root.setProperty('--' + k, v[k])); }
+  try { localStorage.setItem(THEME_KEY, String(S.themeIdx)); } catch (e) {}
+}
+function loadTheme(){
+  let i = 0;
+  try { i = parseInt(localStorage.getItem(THEME_KEY) || '0', 10) || 0; } catch (e) {}
+  applyTheme(i);
+}
+function setTheme(i){ applyTheme(i); render(); }
+function themeHtml(){
+  const cur = S.themeIdx || 0;
+  const btns = THEMES.map((t, i) => `<button class="theme-b" aria-pressed="${i === cur}" onclick="setTheme(${i})" aria-label="Farbschema ${esc(t[0])}"><span class="sw" style="background:${t[1]}"><i style="background:${t[3]}"></i><i style="background:${t[2]}"></i></span><span>${esc(t[0])}</span></button>`).join('');
+  return `<section class="card"><h2>Farbe</h2><div class="hint">Das Schema gilt nur auf diesem Gerät.</div><div class="themes" role="group" aria-label="Farbschema">${btns}</div></section>`;
+}
+
 /* ---------- Start ---------- */
 (function boot(){
+  loadTheme();
   spotifyLoadLocal();
   applyData(loadLocal());
   syncLoadCfg();
