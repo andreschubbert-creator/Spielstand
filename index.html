@@ -216,9 +216,15 @@ summary{cursor:pointer;color:var(--muted);font-size:13px;min-height:36px;display
 .plog-back{position:fixed;inset:0;background:rgba(0,0,0,.6);display:flex;align-items:center;justify-content:center;padding:16px;z-index:50}
 .plog{background:var(--surf);border:1px solid var(--line);border-radius:14px;padding:16px;width:100%;max-width:420px;max-height:80vh;overflow:auto}
 .plog-top{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.plog-score{font-size:34px;font-weight:800;line-height:1.1;color:var(--accent);font-variant-numeric:tabular-nums}
 .plog-list{margin:10px 0 0;padding-left:28px;display:flex;flex-direction:column;gap:6px;font-variant-numeric:tabular-nums}
 .plog-list li{font-size:15px;padding-left:4px}
 .plr{font-size:12px;color:var(--muted);margin-right:4px}
+.pstats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:12px}
+.pst{background:var(--surf2);border-radius:10px;padding:8px;text-align:center}
+.pst b{display:block;font-size:20px;font-variant-numeric:tabular-nums}
+.pst span{font-size:12px;color:var(--muted)}
+.pst-h{font-size:14px;margin:14px 0 0;color:var(--muted)}
 /* Qwixx: Wertungsblatt und Würfel */
 .qwinput{display:flex;flex-direction:column;gap:8px;margin-top:8px}.qwinrow{display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:8px}.qwin{display:flex;flex-direction:column;gap:3px}.qwin small{font-size:12px;opacity:.8}.qwin select{width:100%;padding:8px;border-radius:8px;font-size:16px}
 .qwcard{padding:12px 10px}.qwhead{display:flex;align-items:center;justify-content:space-between;gap:8px}.qwhead h2{margin-bottom:5px}.qwhead strong{font-size:20px;color:var(--gold);white-space:nowrap;font-variant-numeric:tabular-nums}.qwpen{font-size:12px;color:var(--muted);margin:2px 0 10px}
@@ -706,27 +712,53 @@ function bust(){
   g.entries.push({ label: 'Fehlwurf', p: 0 });
   endTurn(true);
 }
-function playerLog(i){ S.plog = i; render(); }
+function playerLog(i){ S.plog = i; S.plogTab = 'log'; render(); }
+function playerLogTab(t){ S.plogTab = t; render(); }
 function closePlayerLog(){ S.plog = null; render(); }
 function playerLogHtml(){
   const g = G(); if (!g || S.plog == null || !g.players[S.plog]) return '';
   const p = g.players[S.plog];
-  let tot = 0;
-  const rows = (p.hist || []).map((h, i) => {
-    const scored = String(h.res).startsWith('+');
-    const gain = scored ? Number(String(h.res).replace(/[^0-9]/g, '')) : 0;
-    tot += gain;
-    const multi = h.parts.length > 1 ? ` <span class="plr">(${h.parts.map(esc).join(' + ')})</span>` : '';
-    const text = i === 0
-      ? (scored ? fmt(gain) : esc(h.res))
-      : (scored ? `+${fmt(gain)} = ${fmt(tot)}` : `${esc(h.res)} = ${fmt(tot)}`);
-    return `<li>${text}${multi}</li>`;
-  }).join('');
+  const hist = p.hist || [];
+  const tab = S.plogTab === 'stats' ? 'stats' : 'log';
+  let body;
+  if (tab === 'log') {
+    let tot = 0;
+    const rows = hist.map((h, i) => {
+      const scored = String(h.res).startsWith('+');
+      const gain = scored ? Number(String(h.res).replace(/[^0-9]/g, '')) : 0;
+      tot += gain;
+      const multi = h.parts.length > 1 ? ` <span class="plr">(${h.parts.map(esc).join(' + ')})</span>` : '';
+      const text = i === 0
+        ? (scored ? fmt(gain) : esc(h.res))
+        : (scored ? `+${fmt(gain)} = ${fmt(tot)}` : `${esc(h.res)} = ${fmt(tot)}`);
+      return `<li>${text}${multi}</li>`;
+    }).join('');
+    body = rows ? `<ol class="plog-list">${rows}</ol>` : `<div class="sub">Noch keine Züge.</div>`;
+  } else {
+    const counts = {};
+    hist.forEach(h => (h.vals || []).forEach(v => { counts[v] = (counts[v] || 0) + 1; }));
+    const top = Object.keys(counts).map(Number)
+      .sort((x, y) => (counts[y] - counts[x]) || (y - x)).slice(0, 5);
+    const fails = hist.filter(h => String(h.res) === 'Fehlwurf').length;
+    const total = Object.values(counts).reduce((a, b) => a + b, 0);
+    body = `<div class="pstats">
+        <div class="pst"><b>${hist.length}</b><span>Züge</span></div>
+        <div class="pst"><b>${fails}</b><span>Fehlwürfe</span></div>
+        <div class="pst"><b>${total}</b><span>Wertungen</span></div>
+      </div>
+      <h3 class="pst-h">Am häufigsten erzielt</h3>
+      ${top.length ? `<ol class="plog-list">${top.map(v => `<li>${fmt(v)} <span class="plr">${counts[v]}×</span></li>`).join('')}</ol>`
+        : `<div class="sub">Noch keine Wertungen. Die Statistik füllt sich mit jedem Zug.</div>`}`;
+  }
   return `<div class="plog-back" onclick="if(event.target===this)closePlayerLog()">
     <section class="plog" role="dialog" aria-modal="true" aria-labelledby="plogTitle">
-      <div class="plog-top"><h2 id="plogTitle">${esc(p.name)}</h2><button class="btn-small" onclick="closePlayerLog()">Schließen</button></div>
-      <div class="sub">Stand ${fmt(p.score)}</div>
-      ${rows ? `<ol class="plog-list">${rows}</ol>` : `<div class="sub">Noch keine Züge.</div>`}
+      <div class="plog-top"><div class="plog-score" aria-label="Aktueller Stand">${fmt(p.score)}</div><button class="btn-small" onclick="closePlayerLog()">Schließen</button></div>
+      <h2 id="plogTitle">${esc(p.name)}</h2>
+      <div class="chips" role="tablist">
+        <button class="chipbtn" role="tab" aria-selected="${tab === 'log'}" aria-pressed="${tab === 'log'}" onclick="playerLogTab('log')">Züge</button>
+        <button class="chipbtn" role="tab" aria-selected="${tab === 'stats'}" aria-pressed="${tab === 'stats'}" onclick="playerLogTab('stats')">Statistik</button>
+      </div>
+      ${body}
     </section></div>`;
 }
 function endBtn(){
@@ -756,7 +788,7 @@ function endTurn(bustTurn){
     note = `${p.name} schreibt ${fmt(g.turn)} Punkte gut (Stand ${fmt(p.score)}).`;
   }
   if (!p.hist) p.hist = [];
-  p.hist.push({ r: g.round, parts: bustTurn ? ['Fehlwurf'] : g.entries.map(e => e.p ? fmt(e.p) : e.label), res: p.last });
+  p.hist.push({ r: g.round, parts: bustTurn ? ['Fehlwurf'] : g.entries.map(e => e.p ? fmt(e.p) : e.label), res: p.last, vals: bustTurn ? [] : g.entries.filter(e => e.p > 0).map(e => e.p) });
   g.lastCommit = { name: p.name, text: p.last };
 
   // Sofortiger Sieg: wer das Ziel zuerst erreicht, gewinnt
