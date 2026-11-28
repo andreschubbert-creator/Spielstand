@@ -2066,10 +2066,16 @@ function spotifyHomeControls(){
 
 /* ---------- Gemeinsam: Live-Sync über Firebase Realtime Database (REST + Stream) ---------- */
 const SYNC_KEY = 'wuerfelspiel-sync-v1';
+const SYNC_DEFAULT_URL = 'https://spielesammlung-2c47e-default-rtdb.firebaseio.com';
+const SYNC_DEFAULT_ROOM = 'TogetherGames';
 let syncES = null, syncTimer = null;
 function syncLoadCfg(){
-  S.sync = { url: '', room: '', on: false, state: 'off' };
-  try { const c = JSON.parse(localStorage.getItem(SYNC_KEY) || 'null'); if (c) Object.assign(S.sync, { url: c.url || '', room: c.room || '', on: !!c.on }); } catch (e) {}
+  // Standard-Datenbank und Raum; gespeicherte Angaben haben Vorrang, wenn sie nicht leer sind
+  S.sync = { url: SYNC_DEFAULT_URL, room: SYNC_DEFAULT_ROOM, on: false, state: 'off' };
+  try {
+    const c = JSON.parse(localStorage.getItem(SYNC_KEY) || 'null');
+    if (c) { if (c.url) S.sync.url = c.url; if (c.room) S.sync.room = c.room; S.sync.on = !!c.on; }
+  } catch (e) {}
 }
 function syncSaveCfg(){
   try { localStorage.setItem(SYNC_KEY, JSON.stringify({ url: S.sync.url, room: S.sync.room, on: S.sync.on })); } catch (e) {}
